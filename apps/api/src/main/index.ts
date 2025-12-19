@@ -6,29 +6,27 @@
  */
 
 import { loadConfig } from './config';
-import { createContainer } from './container';
+import { createContainer, TOKENS } from './container';
 import { createServer } from './server';
 
 async function bootstrap() {
   const config = loadConfig();
   const container = createContainer(config);
-  const server = createServer(container, config);
+  const server = createServer(container);
 
   // Graceful shutdown
-  process.on('SIGTERM', async () => {
-    console.log('SIGTERM received, shutting down...');
+  const shutdown = async (signal: string) => {
+    console.log(`${signal} received, shutting down...`);
     await server.stop();
+    container.dispose();
     process.exit(0);
-  });
+  };
 
-  process.on('SIGINT', async () => {
-    console.log('SIGINT received, shutting down...');
-    await server.stop();
-    process.exit(0);
-  });
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 
   await server.start();
-  console.log(`Server running on port ${config.port}`);
+  console.log(`Server running on port ${container.resolve(TOKENS.config).port}`);
 }
 
 bootstrap().catch((error) => {

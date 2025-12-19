@@ -5,20 +5,28 @@
  * Processa requisições HTTP e mensagens de filas.
  */
 
-import { CloudflareQueueConsumer, MessageBatch } from '../infra/events/cloudflare/cf-queue-consumer';
-import { FanOutProcessor } from '../infra/events/fan-out-processor';
-import { InMemoryEventRegistry } from '../application/event-handlers/handler-registry';
+import { createInjector } from 'typed-inject';
 
-// Tipos do Cloudflare Workers
+import { CloudflareQueueConsumer, MessageBatch } from '../infra/events/cloudflare/cf-queue-consumer';
+import { CloudflareEventBus } from '../infra/events/cloudflare/cf-event-bus';
+import { FanOutProcessor } from '../infra/events/fan-out-processor';
+import { EventDispatcher } from '../infra/events/event-dispatcher';
+import { InMemoryEventRegistry } from '../application/event-handlers/handler-registry';
+import { TOKENS } from './container';
+
+// ─────────────────────────────────────────────────────────────
+// Cloudflare Worker Types
+// ─────────────────────────────────────────────────────────────
+
 export interface Env {
-  // Bindings de filas
+  // Queue bindings
   EVENTS_QUEUE: Queue;
   EVENTS_DLQ: Queue;
 
-  // Bindings de KV
+  // KV bindings
   CACHE: KVNamespace;
 
-  // Bindings de R2
+  // R2 bindings
   STORAGE: R2Bucket;
 
   // Secrets
@@ -36,25 +44,67 @@ interface KVNamespace {}
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface R2Bucket {}
 
+interface ExecutionContext {
+  waitUntil(promise: Promise<unknown>): void;
+  passThroughOnException(): void;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Worker Container Factory
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Cria o container para o contexto do Worker
+ * (recriado a cada request para isolamento)
+ */
+function createWorkerContainer(env: Env) {
+  const eventRegistry = new InMemoryEventRegistry();
+  // TODO: Registrar handlers aqui
+  // registerEventHandlers(eventRegistry);
+
+  const fanOutProcessor = new FanOutProcessor(eventRegistry);
+
+  const eventBus = new CloudflareEventBus(env.EVENTS_QUEUE);
+  const eventDispatcher = new EventDispatcher(eventBus);
+
+  return createInjector()
+    .provideValue(TOKENS.eventRegistry, eventRegistry)
+    .provideValue(TOKENS.fanOutProcessor, fanOutProcessor)
+    .provideValue(TOKENS.eventBus, eventBus)
+    .provideValue(TOKENS.eventDispatcher, eventDispatcher);
+}
+
+// ─────────────────────────────────────────────────────────────
+// Worker Export
+// ─────────────────────────────────────────────────────────────
+
 export default {
   /**
-   * Handler para requisições HTTP
+   * HTTP request handler
    */
-  async fetch(_request: Request, _env: Env, _ctx: ExecutionContext): Promise<Response> {
-    // TODO: Implementar roteamento HTTP com Hono
-    return new Response('Hello from Cloudflare Workers!');
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    const container = createWorkerContainer(env);
+
+    try {
+      // TODO: Implementar roteamento HTTP com Hono
+      // const app = createApp(container);
+      // return app.fetch(request, env, ctx);
+
+      return new Response('Hello from Cloudflare Workers!');
+    } finally {
+      container.dispose();
+    }
   },
 
   /**
-   * Handler para mensagens da fila de eventos
+   * Queue message handler
    */
   async queue(batch: MessageBatch, env: Env, _ctx: ExecutionContext): Promise<void> {
-    // Setup do processador
-    const registry = new InMemoryEventRegistry();
+    const eventRegistry = new InMemoryEventRegistry();
     // TODO: Registrar handlers aqui
 
-    const processor = new FanOutProcessor(registry);
-    const consumer = new CloudflareQueueConsumer(processor, {
+    const fanOutProcessor = new FanOutProcessor(eventRegistry);
+    const consumer = new CloudflareQueueConsumer(fanOutProcessor, {
       send: (msg) => env.EVENTS_DLQ.send(msg),
       sendBatch: (msgs) => env.EVENTS_DLQ.sendBatch(msgs),
     });
@@ -62,9 +112,3 @@ export default {
     await consumer.consume(batch);
   },
 };
-
-// Tipo para ExecutionContext do Cloudflare
-interface ExecutionContext {
-  waitUntil(promise: Promise<unknown>): void;
-  passThroughOnException(): void;
-}
