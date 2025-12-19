@@ -6,8 +6,9 @@
  */
 export interface IdGenerator {
   /**
-   * Gera um identificador único
-   * @returns string com o identificador (sem prefix)
+   * Gera um identificador único com prefix
+   * @param prefix - Prefixo a ser adicionado (ex: 'user', 'org')
+   * @returns string no formato: {prefix}_{id}
    */
-  generate(): string;
+  generate(prefix: string): string;
 }

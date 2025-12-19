@@ -50,7 +50,7 @@ export abstract class BaseEntity<TProps extends BaseEntityProps = BaseEntityProp
     const now = new Date();
 
     // Gera ID com prefix se não fornecido: prefix_id
-    this._id = props.id ?? `${this.prefix()}_${BaseEntity.config.idGenerator.generate()}`;
+    this._id = props.id ?? BaseEntity.config.idGenerator.generate(this.prefix());
     this._createdAt = props.createdAt ?? now;
     this._updatedAt = props.updatedAt ?? now;
     this.props = props;
@@ -91,7 +91,7 @@ export abstract class BaseEntity<TProps extends BaseEntityProps = BaseEntityProp
 
     const event: DomainEvent<TPayload> = {
       ...input,
-      eventId: `evt_${BaseEntity.config.idGenerator.generate()}`,
+      eventId: BaseEntity.config.idGenerator.generate('evt'),
       occurredAt: new Date(),
       version: this._eventVersion,
     };
