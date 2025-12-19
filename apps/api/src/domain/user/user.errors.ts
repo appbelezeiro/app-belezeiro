@@ -27,12 +27,12 @@ export class EmailAlreadyExistsError extends DomainError {
   }
 }
 
-export class DocumentAlreadySetError extends DomainError {
-  readonly code = 'DOCUMENT_ALREADY_SET';
+export class CPFAlreadySetError extends DomainError {
+  readonly code = 'CPF_ALREADY_SET';
 
   constructor() {
-    super('Documento (CPF/CNPJ) já foi definido e não pode ser alterado');
-    this.name = 'DocumentAlreadySetError';
+    super('CPF já foi definido e não pode ser alterado');
+    this.name = 'CPFAlreadySetError';
   }
 }
 
@@ -78,5 +78,23 @@ export class CannotRestoreUserError extends DomainError {
   constructor(message: string) {
     super(message);
     this.name = 'CannotRestoreUserError';
+  }
+}
+
+export class OnboardingAlreadyCompletedError extends DomainError {
+  readonly code = 'ONBOARDING_ALREADY_COMPLETED';
+
+  constructor(userId: string) {
+    super(`Onboarding já foi completado para o usuário: ${userId}`);
+    this.name = 'OnboardingAlreadyCompletedError';
+  }
+}
+
+export class MaxPhonesReachedError extends DomainError {
+  readonly code = 'MAX_PHONES_REACHED';
+
+  constructor(max: number) {
+    super(`Número máximo de telefones atingido: ${max}`);
+    this.name = 'MaxPhonesReachedError';
   }
 }

@@ -15,9 +15,7 @@ export class UserPhoneMapper {
     return {
       id: userPhone.id,
       userId: userPhone.userId,
-      countryCode: userPhone.phone.countryCode,
-      areaCode: userPhone.phone.areaCode,
-      number: userPhone.phone.number,
+      phoneNumber: userPhone.phone.toInternational(), // Ex: +5511999999999
       label: userPhone.label,
       isPrimary: userPhone.isPrimary,
       isWhatsApp: userPhone.isWhatsApp,
@@ -30,13 +28,13 @@ export class UserPhoneMapper {
    * Persistence -> Domain
    */
   static toDomain(row: UserPhoneRow): UserPhone {
-    const phone = Phone.create(`${row.countryCode}${row.areaCode}${row.number}`);
+    const phone = Phone.create(row.phoneNumber);
 
     return UserPhone.reconstitute({
       id: row.id,
       userId: row.userId,
       phone,
-      label: row.label || '',
+      label: row.label,
       isPrimary: row.isPrimary,
       isWhatsApp: row.isWhatsApp,
       createdAt: row.createdAt,

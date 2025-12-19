@@ -1,7 +1,7 @@
 import { IUserRepository } from '../../../../contracts/repositories/i-user.repository';
 import { IEventBus } from '../../../../contracts/events/i-event-bus';
 import { UserName, Gender } from '../../../../domain/user/value-objects';
-import { Document } from '../../../../domain/value-objects/document.vo';
+import { CPF } from '../../../../domain/value-objects/cpf.vo';
 import { URLAddress } from '../../../../domain/value-objects/url-address.vo';
 import { UserNotFoundError } from '../../../../domain/user/user.errors';
 
@@ -47,9 +47,9 @@ class UseCase {
       user.updatePhotoUrl(new URLAddress(input.photoUrl));
     }
 
-    if (input.document) {
-      // Document é imutável - só pode ser definido uma vez
-      user.setDocument(Document.create(input.document));
+    if (input.cpf) {
+      // CPF é imutável - só pode ser definido uma vez
+      user.setCPF(CPF.create(input.cpf));
     }
 
     // 3. Persistir
@@ -70,7 +70,7 @@ namespace UseCase {
     birthDate?: string; // ISO 8601 string
     gender?: string;
     photoUrl?: string;
-    document?: string; // CPF ou CNPJ (será detectado automaticamente)
+    cpf?: string; // CPF (apenas dígitos ou formatado)
   };
 
   export type Output = void;

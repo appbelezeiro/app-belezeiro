@@ -1,9 +1,9 @@
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { IUserRepository } from '../../../../contracts/repositories/i-user.repository';
 import { User } from '../../../../domain/user/user.aggregate';
 import { Email } from '../../../../domain/value-objects/email.vo';
-import { Document } from '../../../../domain/value-objects/document.vo';
+import { CPF } from '../../../../domain/value-objects/cpf.vo';
 import { usersTable } from '../schemas/users.schema';
 import { userPhonesTable } from '../schemas/user-phones.schema';
 import { userProvidersTable } from '../schemas/user-providers.schema';
@@ -36,13 +36,13 @@ export class UserRepository implements IUserRepository {
     const phoneRows = await this.db
       .select()
       .from(userPhonesTable)
-      .where(eq(userPhonesTable.userId, id.value));
+      .where(eq(userPhonesTable.userId, id));
 
     // Buscar providers
     const providerRows = await this.db
       .select()
       .from(userProvidersTable)
-      .where(eq(userProvidersTable.userId, id.value));
+      .where(eq(userProvidersTable.userId, id));
 
     // Mapear para domínio
     const phones = phoneRows.map((row) => UserPhoneMapper.toDomain(row));
@@ -82,17 +82,12 @@ export class UserRepository implements IUserRepository {
     return UserMapper.toDomain(userRow, phones, providers);
   }
 
-  async findByDocument(document: Document): Promise<User | null> {
+  async findByCPF(cpf: CPF): Promise<User | null> {
     // Buscar user
     const [userRow] = await this.db
       .select()
       .from(usersTable)
-      .where(
-        and(
-          eq(usersTable.document, document.value),
-          eq(usersTable.documentType, document.type),
-        ),
-      )
+      .where(eq(usersTable.cpf, cpf.value))
       .limit(1);
 
     if (!userRow) {
@@ -128,16 +123,11 @@ export class UserRepository implements IUserRepository {
     return !!result;
   }
 
-  async existsByDocument(document: Document): Promise<boolean> {
+  async existsByCPF(cpf: CPF): Promise<boolean> {
     const [result] = await this.db
       .select({ id: usersTable.id })
       .from(usersTable)
-      .where(
-        and(
-          eq(usersTable.document, document.value),
-          eq(usersTable.documentType, document.type),
-        ),
-      )
+      .where(eq(usersTable.cpf, cpf.value))
       .limit(1);
 
     return !!result;
@@ -160,8 +150,7 @@ export class UserRepository implements IUserRepository {
           set: {
             email: userInsert.email,
             name: userInsert.name,
-            document: userInsert.document,
-            documentType: userInsert.documentType,
+            cpf: userInsert.cpf,
             birthDate: userInsert.birthDate,
             gender: userInsert.gender,
             photoUrl: userInsert.photoUrl,

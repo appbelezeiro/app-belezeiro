@@ -28,11 +28,10 @@ class UseCase {
       id: user.id,
       email: user.email?.value ?? null,
       name: user.name.value,
-      document: user.document
+      cpf: user.cpf
         ? {
-            value: user.document.value,
-            type: user.document.type,
-            formatted: user.document.toFormatted(),
+            value: user.cpf.value,
+            formatted: user.cpf.toFormatted(),
           }
         : undefined,
       birthDate: user.birthDate,
@@ -70,9 +69,8 @@ namespace UseCase {
     id: string;
     email: string | null;
     name: string;
-    document?: {
+    cpf?: {
       value: string;
-      type: string;
       formatted: string;
     };
     birthDate?: Date;

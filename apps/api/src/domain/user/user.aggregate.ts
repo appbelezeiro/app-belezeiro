@@ -1,25 +1,28 @@
 import { AggregateRoot, BaseEntityProps } from '../entities/base/aggregate-root';
 import { Email } from '../value-objects/email.vo';
 import { Phone } from '../value-objects/phone.vo';
-import { Document } from '../value-objects/document.vo';
+import { CPF } from '../value-objects/cpf.vo';
 import { URLAddress } from '../value-objects/url-address.vo';
 import { UserName, Gender, UserPhoneId, ProviderId } from './value-objects';
 import { UserPhone } from './user-phone.entity';
 import { UserProvider, ProviderType } from './user-provider.entity';
 import {
   UserDeletedError,
-  DocumentAlreadySetError,
+  CPFAlreadySetError,
   CannotRemoveLastProviderError,
   ProviderAlreadyLinkedError,
   ProviderNotFoundError,
   PhoneNotFoundError,
   CannotRestoreUserError,
+  OnboardingAlreadyCompletedError,
+  MaxPhonesReachedError,
 } from './user.errors';
+import { UserEvents } from './user.events';
 
 export interface UserProps extends BaseEntityProps {
   email: Email | null;
   name: UserName;
-  document?: Document;
+  cpf?: CPF;
   birthDate?: Date;
   gender?: Gender;
   photoUrl?: URLAddress;
@@ -37,14 +40,16 @@ export interface UserProps extends BaseEntityProps {
  *
  * Invariantes:
  * - Email é obrigatório (exceto quando deletado)
- * - Document é imutável após primeira definição
+ * - CPF é imutável após primeira definição
  * - User deve ter pelo menos 1 provider sempre
  * - Não pode ter 2 providers do mesmo tipo
  * - Apenas 1 phone pode ser primary
+ * - Máximo de 5 telefones por usuário
  * - User deletado não pode ser modificado
  * - Onboarding só pode ser completo uma vez
  */
 export class User extends AggregateRoot<UserProps> {
+  private static readonly MAX_PHONES = 5;
   get aggregateType(): string {
     return 'User';
   }
@@ -93,7 +98,7 @@ export class User extends AggregateRoot<UserProps> {
 
     // Disparar evento
     user.raise({
-      eventType: 'user.created',
+      eventType: UserEvents.UserCreated,
       aggregateId: user.id,
       aggregateType: 'User',
       payload: {
@@ -114,7 +119,7 @@ export class User extends AggregateRoot<UserProps> {
     id: string;
     email: Email | null;
     name: UserName;
-    document?: Document;
+    cpf?: CPF;
     birthDate?: Date;
     gender?: Gender;
     photoUrl?: URLAddress;
@@ -130,7 +135,7 @@ export class User extends AggregateRoot<UserProps> {
       id: data.id,
       email: data.email,
       name: data.name,
-      document: data.document,
+      cpf: data.cpf,
       birthDate: data.birthDate,
       gender: data.gender,
       photoUrl: data.photoUrl,
@@ -156,8 +161,8 @@ export class User extends AggregateRoot<UserProps> {
     return this.props.name;
   }
 
-  get document(): Document | undefined {
-    return this.props.document;
+  get cpf(): CPF | undefined {
+    return this.props.cpf;
   }
 
   get birthDate(): Date | undefined {
@@ -193,6 +198,17 @@ export class User extends AggregateRoot<UserProps> {
   }
 
   // ═══════════════════════════════════════════════════════════════
+  // Helpers
+  // ═══════════════════════════════════════════════════════════════
+
+  /**
+   * Retorna o telefone primário do usuário, se houver
+   */
+  getPrimaryPhone(): UserPhone | undefined {
+    return this.props.phones.find((p) => p.isPrimary);
+  }
+
+  // ═══════════════════════════════════════════════════════════════
   // Guards
   // ═══════════════════════════════════════════════════════════════
 
@@ -218,7 +234,7 @@ export class User extends AggregateRoot<UserProps> {
     this.touch();
 
     this.raise({
-      eventType: 'user.name.updated',
+      eventType: UserEvents.UserNameUpdated,
       aggregateId: this.id,
       aggregateType: 'User',
       payload: {
@@ -250,7 +266,7 @@ export class User extends AggregateRoot<UserProps> {
     this.touch();
 
     this.raise({
-      eventType: 'user.photo.updated',
+      eventType: UserEvents.UserPhotoUpdated,
       aggregateId: this.id,
       aggregateType: 'User',
       payload: {
@@ -261,26 +277,27 @@ export class User extends AggregateRoot<UserProps> {
   }
 
   /**
-   * Define o documento (CPF/CNPJ) uma única vez.
+   * Define o CPF uma única vez.
    * Imutável após set.
    */
-  setDocument(document: Document): void {
+  setCPF(cpf: CPF): void {
     this.ensureNotDeleted();
 
-    if (this.props.document) {
-      throw new DocumentAlreadySetError();
+    if (this.props.cpf) {
+      throw new CPFAlreadySetError();
     }
 
-    this.props.document = document;
+    this.props.cpf = cpf;
     this.touch();
 
     this.raise({
-      eventType: 'user.document.set',
+      eventType: UserEvents.UserDocumentSet,
       aggregateId: this.id,
       aggregateType: 'User',
       payload: {
         userId: this.id,
-        documentType: document.type,
+        documentType: 'cpf',
+        documentValue: cpf.value,
       },
     });
   }
@@ -291,6 +308,11 @@ export class User extends AggregateRoot<UserProps> {
 
   addPhone(phone: Phone, label: string, isWhatsApp: boolean): void {
     this.ensureNotDeleted();
+
+    // Validar máximo de telefones
+    if (this.props.phones.length >= User.MAX_PHONES) {
+      throw new MaxPhonesReachedError(User.MAX_PHONES);
+    }
 
     const isPrimary = this.props.phones.length === 0;  // Primeiro phone é primary
 
@@ -306,14 +328,16 @@ export class User extends AggregateRoot<UserProps> {
     this.touch();
 
     this.raise({
-      eventType: 'user.phone.added',
+      eventType: UserEvents.UserPhoneAdded,
       aggregateId: this.id,
       aggregateType: 'User',
       payload: {
         userId: this.id,
         phoneId: userPhone.id,
         phone: phone.toInternational(),
+        label,
         isPrimary,
+        isWhatsApp,
       },
     });
   }
@@ -331,7 +355,7 @@ export class User extends AggregateRoot<UserProps> {
     this.touch();
 
     this.raise({
-      eventType: 'user.phone.removed',
+      eventType: UserEvents.UserPhoneRemoved,
       aggregateId: this.id,
       aggregateType: 'User',
       payload: {
@@ -361,7 +385,7 @@ export class User extends AggregateRoot<UserProps> {
     this.touch();
 
     this.raise({
-      eventType: 'user.phone.primary_changed',
+      eventType: UserEvents.UserPrimaryPhoneChanged,
       aggregateId: this.id,
       aggregateType: 'User',
       payload: {
@@ -414,13 +438,15 @@ export class User extends AggregateRoot<UserProps> {
     this.touch();
 
     this.raise({
-      eventType: 'user.provider.linked',
+      eventType: UserEvents.ProviderLinked,
       aggregateId: this.id,
       aggregateType: 'User',
       payload: {
         userId: this.id,
+        providerId: userProvider.id,
         provider,
-        providerId: providerId.value,
+        providerUserId: providerId.value,
+        providerEmail: providerEmail?.value,
       },
     });
   }
@@ -439,15 +465,17 @@ export class User extends AggregateRoot<UserProps> {
       throw new ProviderNotFoundError(provider);
     }
 
+    const providerId = this.props.providers[providerIndex].id;
     this.props.providers.splice(providerIndex, 1);
     this.touch();
 
     this.raise({
-      eventType: 'user.provider.unlinked',
+      eventType: UserEvents.ProviderUnlinked,
       aggregateId: this.id,
       aggregateType: 'User',
       payload: {
         userId: this.id,
+        providerId,
         provider,
       },
     });
@@ -461,17 +489,14 @@ export class User extends AggregateRoot<UserProps> {
     this.ensureNotDeleted();
 
     if (this.props.onboardingCompleted) {
-      console.warn(
-        `Tentativa de completar onboarding para usuário ${this.id} que já completou. Operação ignorada.`,
-      );
-      return;  // Idempotente
+      throw new OnboardingAlreadyCompletedError(this.id);
     }
 
     this.props.onboardingCompleted = true;
     this.touch();
 
     this.raise({
-      eventType: 'user.onboarding.completed',
+      eventType: UserEvents.UserOnboardingCompleted,
       aggregateId: this.id,
       aggregateType: 'User',
       payload: {
@@ -490,7 +515,7 @@ export class User extends AggregateRoot<UserProps> {
     this.touch();
 
     this.raise({
-      eventType: 'user.deleted',
+      eventType: UserEvents.UserDeleted,
       aggregateId: this.id,
       aggregateType: 'User',
       payload: {
@@ -520,7 +545,7 @@ export class User extends AggregateRoot<UserProps> {
     this.touch();
 
     this.raise({
-      eventType: 'user.restored',
+      eventType: UserEvents.UserRestored,
       aggregateId: this.id,
       aggregateType: 'User',
       payload: {

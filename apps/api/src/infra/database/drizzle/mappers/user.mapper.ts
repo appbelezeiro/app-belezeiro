@@ -1,9 +1,9 @@
 import { User } from '../../../../domain/user/user.aggregate';
 import { UserPhone } from '../../../../domain/user/user-phone.entity';
 import { UserProvider } from '../../../../domain/user/user-provider.entity';
-import { UserId, UserName, Gender } from '../../../../domain/user/value-objects';
+import { UserName, Gender } from '../../../../domain/user/value-objects';
 import { Email } from '../../../../domain/value-objects/email.vo';
-import { Document, DocumentType } from '../../../../domain/value-objects/document.vo';
+import { CPF } from '../../../../domain/value-objects/cpf.vo';
 import { URLAddress } from '../../../../domain/value-objects/url-address.vo';
 import { UserRow, UserInsert } from '../schemas/users.schema';
 
@@ -27,8 +27,7 @@ export class UserMapper {
         id: user.id,
         email: user.email?.value ?? null,
         name: user.name.value,
-        document: user.document?.value ?? null,
-        documentType: user.document?.type ?? null,
+        cpf: user.cpf?.value ?? null,
         birthDate: user.birthDate ? user.birthDate.toISOString().split('T')[0] : null,
         gender: user.gender?.value ?? null,
         photoUrl: user.photoUrl?.value ?? null,
@@ -46,21 +45,11 @@ export class UserMapper {
    * Requer phones e providers carregados separadamente
    */
   static toDomain(row: UserRow, phones: UserPhone[], providers: UserProvider[]): User {
-    let document: Document | undefined;
-
-    if (row.document && row.documentType) {
-      if (row.documentType === DocumentType.CPF) {
-        document = Document.fromCPF(row.document);
-      } else if (row.documentType === DocumentType.CNPJ) {
-        document = Document.fromCNPJ(row.document);
-      }
-    }
-
     return User.reconstitute({
       id: row.id,
       email: row.email ? new Email(row.email) : null,
       name: new UserName(row.name),
-      document,
+      cpf: row.cpf ? CPF.create(row.cpf) : undefined,
       birthDate: row.birthDate ? new Date(row.birthDate) : undefined,
       gender: row.gender ? new Gender(row.gender) : undefined,
       photoUrl: row.photoUrl ? new URLAddress(row.photoUrl) : undefined,

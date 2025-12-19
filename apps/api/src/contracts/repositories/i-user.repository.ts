@@ -1,6 +1,6 @@
 import { User } from '../../domain/user/user.aggregate';
 import { Email } from '../../domain/value-objects/email.vo';
-import { Document } from '../../domain/value-objects/document.vo';
+import { CPF } from '../../domain/value-objects/cpf.vo';
 
 /**
  * IUserRepository
@@ -28,10 +28,10 @@ export interface IUserRepository {
   findByEmail(email: Email): Promise<User | null>;
 
   /**
-   * Busca usuário por documento (CPF/CNPJ)
+   * Busca usuário por CPF
    * @returns User ou null se não encontrado
    */
-  findByDocument(document: Document): Promise<User | null>;
+  findByCPF(cpf: CPF): Promise<User | null>;
 
   /**
    * Verifica se existe usuário com o email
@@ -40,10 +40,10 @@ export interface IUserRepository {
   existsByEmail(email: Email): Promise<boolean>;
 
   /**
-   * Verifica se existe usuário com o documento
+   * Verifica se existe usuário com o CPF
    * @returns true se existe, false caso contrário
    */
-  existsByDocument(document: Document): Promise<boolean>;
+  existsByCPF(cpf: CPF): Promise<boolean>;
 
   /**
    * Salva usuário (insert ou update)
