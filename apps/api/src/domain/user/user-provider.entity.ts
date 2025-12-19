@@ -1,6 +1,6 @@
 import { BaseEntity, BaseEntityProps } from '../entities/base/base-entity';
 import { Email } from '../value-objects/email.vo';
-import { UserId, UserProviderId, ProviderId } from './value-objects';
+import { UserProviderId, ProviderId } from './value-objects';
 
 export enum ProviderType {
   GOOGLE = 'google',
@@ -9,7 +9,7 @@ export enum ProviderType {
 }
 
 export interface UserProviderProps extends BaseEntityProps {
-  userId: UserId;
+  userId: string;
   provider: ProviderType;
   providerId: ProviderId;
   providerEmail?: Email;
@@ -35,7 +35,7 @@ export class UserProvider extends BaseEntity<UserProviderProps> {
   }
 
   static create(data: {
-    userId: UserId;
+    userId: string;
     provider: ProviderType;
     providerId: ProviderId;
     providerEmail?: Email;
@@ -54,7 +54,7 @@ export class UserProvider extends BaseEntity<UserProviderProps> {
 
   static reconstitute(data: {
     id: string;
-    userId: UserId;
+    userId: string;
     provider: ProviderType;
     providerId: ProviderId;
     providerEmail?: Email;
@@ -76,7 +76,7 @@ export class UserProvider extends BaseEntity<UserProviderProps> {
     });
   }
 
-  get userId(): UserId {
+  get userId(): string {
     return this.props.userId;
   }
 

@@ -1,9 +1,9 @@
 import { BaseEntity, BaseEntityProps } from '../entities/base/base-entity';
 import { Phone } from '../value-objects/phone.vo';
-import { UserId, UserPhoneId } from './value-objects';
+import { UserPhoneId } from './value-objects';
 
 export interface UserPhoneProps extends BaseEntityProps {
-  userId: UserId;
+  userId: string;
   phone: Phone;
   label: string;
   isPrimary: boolean;
@@ -28,7 +28,7 @@ export class UserPhone extends BaseEntity<UserPhoneProps> {
   }
 
   static create(data: {
-    userId: UserId;
+    userId: string;
     phone: Phone;
     label: string;
     isPrimary: boolean;
@@ -45,7 +45,7 @@ export class UserPhone extends BaseEntity<UserPhoneProps> {
 
   static reconstitute(data: {
     id: string;
-    userId: UserId;
+    userId: string;
     phone: Phone;
     label: string;
     isPrimary: boolean;
@@ -65,7 +65,7 @@ export class UserPhone extends BaseEntity<UserPhoneProps> {
     });
   }
 
-  get userId(): UserId {
+  get userId(): string {
     return this.props.userId;
   }
 

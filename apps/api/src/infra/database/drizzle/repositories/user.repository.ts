@@ -2,7 +2,6 @@ import { eq, and } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { IUserRepository } from '../../../../contracts/repositories/i-user.repository';
 import { User } from '../../../../domain/user/user.aggregate';
-import { UserId } from '../../../../domain/user/value-objects';
 import { Email } from '../../../../domain/value-objects/email.vo';
 import { Document } from '../../../../domain/value-objects/document.vo';
 import { usersTable } from '../schemas/users.schema';
@@ -21,12 +20,12 @@ import { UserProviderMapper } from '../mappers/user-provider.mapper';
 export class UserRepository implements IUserRepository {
   constructor(private readonly db: NodePgDatabase) {}
 
-  async findById(id: UserId): Promise<User | null> {
+  async findById(id: string): Promise<User | null> {
     // Buscar user
     const [userRow] = await this.db
       .select()
       .from(usersTable)
-      .where(eq(usersTable.id, id.value))
+      .where(eq(usersTable.id, id))
       .limit(1);
 
     if (!userRow) {

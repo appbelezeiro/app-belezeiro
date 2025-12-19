@@ -1,5 +1,4 @@
 import { User } from '../../domain/user/user.aggregate';
-import { UserId } from '../../domain/user/value-objects/user-id.vo';
 import { Email } from '../../domain/value-objects/email.vo';
 import { Document } from '../../domain/value-objects/document.vo';
 
@@ -20,7 +19,7 @@ export interface IUserRepository {
    * Busca usuário por ID
    * @returns User ou null se não encontrado
    */
-  findById(id: UserId): Promise<User | null>;
+  findById(id: string): Promise<User | null>;
 
   /**
    * Busca usuário por email

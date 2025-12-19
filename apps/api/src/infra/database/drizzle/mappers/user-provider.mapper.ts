@@ -1,5 +1,5 @@
 import { UserProvider, ProviderType } from '../../../../domain/user/user-provider.entity';
-import { UserId, UserProviderId, ProviderId } from '../../../../domain/user/value-objects';
+import { ProviderId } from '../../../../domain/user/value-objects';
 import { Email } from '../../../../domain/value-objects/email.vo';
 import { UserProviderRow, UserProviderInsert } from '../schemas/user-providers.schema';
 
@@ -15,7 +15,7 @@ export class UserProviderMapper {
   static toPersistence(userProvider: UserProvider): UserProviderInsert {
     return {
       id: userProvider.id,
-      userId: userProvider.userId.value,
+      userId: userProvider.userId,
       provider: userProvider.provider,
       providerId: userProvider.providerId.value,
       providerEmail: userProvider.providerEmail?.value,
@@ -32,7 +32,7 @@ export class UserProviderMapper {
   static toDomain(row: UserProviderRow): UserProvider {
     return UserProvider.reconstitute({
       id: row.id,
-      userId: new UserId(row.userId),
+      userId: row.userId,
       provider: row.provider as ProviderType,
       providerId: new ProviderId(row.providerId),
       providerEmail: row.providerEmail ? new Email(row.providerEmail) : undefined,

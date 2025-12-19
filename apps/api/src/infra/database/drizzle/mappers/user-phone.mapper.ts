@@ -1,5 +1,4 @@
 import { UserPhone } from '../../../../domain/user/user-phone.entity';
-import { UserId, UserPhoneId } from '../../../../domain/user/value-objects';
 import { Phone } from '../../../../domain/value-objects/phone.vo';
 import { UserPhoneRow, UserPhoneInsert } from '../schemas/user-phones.schema';
 
@@ -15,7 +14,7 @@ export class UserPhoneMapper {
   static toPersistence(userPhone: UserPhone): UserPhoneInsert {
     return {
       id: userPhone.id,
-      userId: userPhone.userId.value,
+      userId: userPhone.userId,
       countryCode: userPhone.phone.countryCode,
       areaCode: userPhone.phone.areaCode,
       number: userPhone.phone.number,
@@ -35,7 +34,7 @@ export class UserPhoneMapper {
 
     return UserPhone.reconstitute({
       id: row.id,
-      userId: new UserId(row.userId),
+      userId: row.userId,
       phone,
       label: row.label || '',
       isPrimary: row.isPrimary,

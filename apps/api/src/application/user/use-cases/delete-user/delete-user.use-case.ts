@@ -1,6 +1,5 @@
 import { IUserRepository } from '../../../../contracts/repositories/i-user.repository';
 import { IEventBus } from '../../../../contracts/events/i-event-bus';
-import { UserId } from '../../../../domain/user/value-objects';
 import { UserNotFoundError } from '../../../../domain/user/user.errors';
 
 /**
@@ -22,7 +21,7 @@ class UseCase {
 
   async execute(input: UseCase.Input): Promise<UseCase.Output> {
     // 1. Buscar usuário
-    const user = await this.userRepository.findById(new UserId(input.userId));
+    const user = await this.userRepository.findById(input.userId);
 
     if (!user) {
       throw new UserNotFoundError(input.userId);

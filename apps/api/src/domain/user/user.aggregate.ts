@@ -3,7 +3,7 @@ import { Email } from '../value-objects/email.vo';
 import { Phone } from '../value-objects/phone.vo';
 import { Document } from '../value-objects/document.vo';
 import { URLAddress } from '../value-objects/url-address.vo';
-import { UserId, UserName, Gender, UserPhoneId, ProviderId } from './value-objects';
+import { UserName, Gender, UserPhoneId, ProviderId } from './value-objects';
 import { UserPhone } from './user-phone.entity';
 import { UserProvider, ProviderType } from './user-provider.entity';
 import {
@@ -17,7 +17,6 @@ import {
 } from './user.errors';
 
 export interface UserProps extends BaseEntityProps {
-  userId: UserId;
   email: Email | null;
   name: UserName;
   document?: Document;
@@ -73,10 +72,7 @@ export class User extends AggregateRoot<UserProps> {
     providerId: ProviderId;
     providerEmail?: Email;
   }): User {
-    const userId = new UserId('');  // Será gerado pelo BaseEntity
-
     const user = new User({
-      userId,
       email: data.email,
       name: data.name,
       photoUrl: data.photoUrl,
@@ -87,14 +83,13 @@ export class User extends AggregateRoot<UserProps> {
 
     // Adicionar provider inicial
     const provider = UserProvider.create({
-      userId: new UserId(user.id),  // Agora temos o ID gerado
+      userId: user.id,
       provider: data.provider,
       providerId: data.providerId,
       providerEmail: data.providerEmail,
     });
 
     user.props.providers.push(provider);
-    user.props.userId = new UserId(user.id);  // Atualizar com o ID correto
 
     // Disparar evento
     user.raise({
@@ -133,7 +128,6 @@ export class User extends AggregateRoot<UserProps> {
   }): User {
     return new User({
       id: data.id,
-      userId: new UserId(data.id),
       email: data.email,
       name: data.name,
       document: data.document,
@@ -153,10 +147,6 @@ export class User extends AggregateRoot<UserProps> {
   // ═══════════════════════════════════════════════════════════════
   // Getters
   // ═══════════════════════════════════════════════════════════════
-
-  get userId(): UserId {
-    return this.props.userId;
-  }
 
   get email(): Email | null {
     return this.props.email;
@@ -305,7 +295,7 @@ export class User extends AggregateRoot<UserProps> {
     const isPrimary = this.props.phones.length === 0;  // Primeiro phone é primary
 
     const userPhone = UserPhone.create({
-      userId: this.userId,
+      userId: this.id,
       phone,
       label,
       isPrimary,
@@ -414,7 +404,7 @@ export class User extends AggregateRoot<UserProps> {
     }
 
     const userProvider = UserProvider.create({
-      userId: this.userId,
+      userId: this.id,
       provider,
       providerId,
       providerEmail,

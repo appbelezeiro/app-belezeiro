@@ -1,6 +1,6 @@
 import { IUserRepository } from '../../../../contracts/repositories/i-user.repository';
 import { IEventBus } from '../../../../contracts/events/i-event-bus';
-import { UserId, UserName, Gender } from '../../../../domain/user/value-objects';
+import { UserName, Gender } from '../../../../domain/user/value-objects';
 import { Document } from '../../../../domain/value-objects/document.vo';
 import { URLAddress } from '../../../../domain/value-objects/url-address.vo';
 import { UserNotFoundError } from '../../../../domain/user/user.errors';
@@ -24,7 +24,7 @@ class UseCase {
 
   async execute(input: UseCase.Input): Promise<UseCase.Output> {
     // 1. Buscar usuário
-    const user = await this.userRepository.findById(new UserId(input.userId));
+    const user = await this.userRepository.findById(input.userId);
 
     if (!user) {
       throw new UserNotFoundError(input.userId);

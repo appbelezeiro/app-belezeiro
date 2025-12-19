@@ -56,7 +56,7 @@ class UseCase {
 
     // 5. Retornar ID
     return {
-      userId: user.userId,
+      userId: user.id,
     };
   }
 }
@@ -72,7 +72,7 @@ namespace UseCase {
   };
 
   export type Output = {
-    userId: import('../../../../domain/user/value-objects').UserId;
+    userId: string;
   };
 }
 
