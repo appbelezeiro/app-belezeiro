@@ -1,11 +1,18 @@
-import { randomUUID } from 'node:crypto';
-
 import { DomainEvent, DomainEventInput } from '../../events/base/domain-event';
+import { IdGenerator } from '../../services/id-generator';
 
 export interface BaseEntityProps {
   id?: string;
   createdAt?: Date;
   updatedAt?: Date;
+}
+
+/**
+ * Configuração global para BaseEntity
+ * Objeto extensível para futuras configurações
+ */
+export interface BaseEntityConfig {
+  idGenerator: IdGenerator;
 }
 
 export abstract class BaseEntity<TProps extends BaseEntityProps = BaseEntityProps> {
@@ -17,10 +24,33 @@ export abstract class BaseEntity<TProps extends BaseEntityProps = BaseEntityProp
   private _domainEvents: DomainEvent[] = [];
   private _eventVersion: number = 0;
 
+  private static config: BaseEntityConfig | null = null;
+
+  /**
+   * Configura o comportamento global de BaseEntity
+   * Deve ser chamado uma vez na inicialização da aplicação
+   */
+  static configure(config: BaseEntityConfig): void {
+    BaseEntity.config = config;
+  }
+
+  /**
+   * Retorna o prefixo do ID da entidade (máximo 5 caracteres)
+   * Será concatenado com o ID gerado: prefix_id
+   */
+  protected abstract prefix(): string;
+
   constructor(props: TProps) {
+    if (!BaseEntity.config) {
+      throw new Error(
+        'BaseEntity não foi configurado. Chame BaseEntity.configure() antes de criar entidades.',
+      );
+    }
+
     const now = new Date();
 
-    this._id = props.id ?? randomUUID();
+    // Gera ID com prefix se não fornecido: prefix_id
+    this._id = props.id ?? BaseEntity.config.idGenerator.generate(this.prefix());
     this._createdAt = props.createdAt ?? now;
     this._updatedAt = props.updatedAt ?? now;
     this.props = props;
@@ -51,11 +81,17 @@ export abstract class BaseEntity<TProps extends BaseEntityProps = BaseEntityProp
   }
 
   protected raise<TPayload>(input: DomainEventInput<TPayload>): void {
+    if (!BaseEntity.config) {
+      throw new Error(
+        'BaseEntity não foi configurado. Chame BaseEntity.configure() antes de criar entidades.',
+      );
+    }
+
     this._eventVersion += 1;
 
     const event: DomainEvent<TPayload> = {
       ...input,
-      eventId: randomUUID(),
+      eventId: BaseEntity.config.idGenerator.generate('evt'),
       occurredAt: new Date(),
       version: this._eventVersion,
     };
