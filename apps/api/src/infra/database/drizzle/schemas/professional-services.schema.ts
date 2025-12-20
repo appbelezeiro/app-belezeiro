@@ -7,7 +7,6 @@ export const professionalServicesTable = pgTable('professional_services', {
     .references(() => professionalProfilesTable.id, { onDelete: 'cascade' })
     .notNull(),
   serviceId: varchar('service_id', { length: 64 }).notNull(),
-  customPrice: integer('custom_price'),
   customDuration: integer('custom_duration'),
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),

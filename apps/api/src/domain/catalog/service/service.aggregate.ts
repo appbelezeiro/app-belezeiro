@@ -4,11 +4,9 @@ import { ServiceEvents } from './service.events';
 export interface ServiceProps extends BaseEntityProps {
   name: string;
   description?: string;
-  defaultPrice?: number;
   defaultDuration?: number;
   isGlobal: boolean;
   ownerId?: string;
-  unitId?: string;
   createdById?: string;
 }
 
@@ -27,33 +25,26 @@ export class Service extends AggregateRoot<ServiceProps> {
   }
 
   private validate(): void {
-    if (this.props.isGlobal && (this.props.ownerId || this.props.unitId)) {
-      throw new Error('Global service cannot have ownerId or unitId');
+    if (this.props.isGlobal && this.props.ownerId) {
+      throw new Error('Global service cannot have ownerId');
     }
 
-    if (!this.props.isGlobal && !this.props.ownerId && !this.props.unitId) {
-      throw new Error('Custom service must have ownerId or unitId');
-    }
-
-    if (this.props.ownerId && this.props.unitId) {
-      throw new Error('Service cannot have both ownerId and unitId');
+    if (!this.props.isGlobal && !this.props.ownerId) {
+      throw new Error('Custom service must have ownerId');
     }
   }
 
   static createGlobal(data: {
     name: string;
     description?: string;
-    defaultPrice?: number;
     defaultDuration?: number;
   }): Service {
     const service = new Service({
       name: data.name,
       description: data.description,
-      defaultPrice: data.defaultPrice,
       defaultDuration: data.defaultDuration,
       isGlobal: true,
       ownerId: undefined,
-      unitId: undefined,
       createdById: undefined,
     });
 
@@ -75,17 +66,14 @@ export class Service extends AggregateRoot<ServiceProps> {
     professionalProfileId: string;
     name: string;
     description?: string;
-    defaultPrice?: number;
     defaultDuration?: number;
   }): Service {
     const service = new Service({
       name: data.name,
       description: data.description,
-      defaultPrice: data.defaultPrice,
       defaultDuration: data.defaultDuration,
       isGlobal: false,
       ownerId: data.professionalProfileId,
-      unitId: undefined,
       createdById: data.professionalProfileId,
     });
 
@@ -104,49 +92,13 @@ export class Service extends AggregateRoot<ServiceProps> {
     return service;
   }
 
-  static createCustomForUnit(data: {
-    unitId: string;
-    createdById: string;
-    name: string;
-    description?: string;
-    defaultPrice?: number;
-    defaultDuration?: number;
-  }): Service {
-    const service = new Service({
-      name: data.name,
-      description: data.description,
-      defaultPrice: data.defaultPrice,
-      defaultDuration: data.defaultDuration,
-      isGlobal: false,
-      ownerId: undefined,
-      unitId: data.unitId,
-      createdById: data.createdById,
-    });
-
-    service.raise({
-      eventType: ServiceEvents.ServiceCreated,
-      aggregateId: service.id,
-      aggregateType: 'Service',
-      payload: {
-        serviceId: service.id,
-        name: data.name,
-        isGlobal: false,
-        unitId: data.unitId,
-      },
-    });
-
-    return service;
-  }
-
   static reconstitute(data: {
     id: string;
     name: string;
     description?: string;
-    defaultPrice?: number;
     defaultDuration?: number;
     isGlobal: boolean;
     ownerId?: string;
-    unitId?: string;
     createdById?: string;
     createdAt: Date;
     updatedAt: Date;
@@ -155,11 +107,9 @@ export class Service extends AggregateRoot<ServiceProps> {
       id: data.id,
       name: data.name,
       description: data.description,
-      defaultPrice: data.defaultPrice,
       defaultDuration: data.defaultDuration,
       isGlobal: data.isGlobal,
       ownerId: data.ownerId,
-      unitId: data.unitId,
       createdById: data.createdById,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
@@ -174,10 +124,6 @@ export class Service extends AggregateRoot<ServiceProps> {
     return this.props.description;
   }
 
-  get defaultPrice(): number | undefined {
-    return this.props.defaultPrice;
-  }
-
   get defaultDuration(): number | undefined {
     return this.props.defaultDuration;
   }
@@ -190,10 +136,6 @@ export class Service extends AggregateRoot<ServiceProps> {
     return this.props.ownerId;
   }
 
-  get unitId(): string | undefined {
-    return this.props.unitId;
-  }
-
   get createdById(): string | undefined {
     return this.props.createdById;
   }
@@ -201,7 +143,6 @@ export class Service extends AggregateRoot<ServiceProps> {
   update(data: {
     name?: string;
     description?: string;
-    defaultPrice?: number;
     defaultDuration?: number;
   }): void {
     const changedFields: string[] = [];
@@ -214,11 +155,6 @@ export class Service extends AggregateRoot<ServiceProps> {
     if (data.description !== undefined && data.description !== this.props.description) {
       this.props.description = data.description;
       changedFields.push('description');
-    }
-
-    if (data.defaultPrice !== undefined && data.defaultPrice !== this.props.defaultPrice) {
-      this.props.defaultPrice = data.defaultPrice;
-      changedFields.push('defaultPrice');
     }
 
     if (data.defaultDuration !== undefined && data.defaultDuration !== this.props.defaultDuration) {

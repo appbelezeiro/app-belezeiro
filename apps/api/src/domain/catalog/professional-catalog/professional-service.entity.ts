@@ -3,7 +3,6 @@ import { BaseEntity, BaseEntityProps } from '../../entities/base/base-entity';
 export interface ProfessionalServiceProps extends BaseEntityProps {
   professionalProfileId: string;
   serviceId: string;
-  customPrice?: number;
   customDuration?: number;
   isActive: boolean;
 }
@@ -20,14 +19,12 @@ export class ProfessionalService extends BaseEntity<ProfessionalServiceProps> {
   static create(data: {
     professionalProfileId: string;
     serviceId: string;
-    customPrice?: number;
     customDuration?: number;
     isActive?: boolean;
   }): ProfessionalService {
     return new ProfessionalService({
       professionalProfileId: data.professionalProfileId,
       serviceId: data.serviceId,
-      customPrice: data.customPrice,
       customDuration: data.customDuration,
       isActive: data.isActive ?? true,
     });
@@ -37,7 +34,6 @@ export class ProfessionalService extends BaseEntity<ProfessionalServiceProps> {
     id: string;
     professionalProfileId: string;
     serviceId: string;
-    customPrice?: number;
     customDuration?: number;
     isActive: boolean;
     createdAt: Date;
@@ -47,7 +43,6 @@ export class ProfessionalService extends BaseEntity<ProfessionalServiceProps> {
       id: data.id,
       professionalProfileId: data.professionalProfileId,
       serviceId: data.serviceId,
-      customPrice: data.customPrice,
       customDuration: data.customDuration,
       isActive: data.isActive,
       createdAt: data.createdAt,
@@ -63,21 +58,12 @@ export class ProfessionalService extends BaseEntity<ProfessionalServiceProps> {
     return this.props.serviceId;
   }
 
-  get customPrice(): number | undefined {
-    return this.props.customPrice;
-  }
-
   get customDuration(): number | undefined {
     return this.props.customDuration;
   }
 
   get isActive(): boolean {
     return this.props.isActive;
-  }
-
-  updatePrice(price: number | undefined): void {
-    this.props.customPrice = price;
-    this.touch();
   }
 
   updateDuration(duration: number | undefined): void {

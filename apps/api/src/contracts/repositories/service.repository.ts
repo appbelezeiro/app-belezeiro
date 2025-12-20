@@ -5,6 +5,5 @@ export interface IServiceRepository {
   findById(id: string): Promise<Service | null>;
   findGlobal(): Promise<Service[]>;
   findBySpecialtyIds(specialtyIds: string[]): Promise<Service[]>;
-  findByUnitId(unitId: string): Promise<Service[]>;
   update(service: Service): Promise<Service>;
 }

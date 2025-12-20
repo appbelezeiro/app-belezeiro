@@ -2,13 +2,13 @@ import { AggregateRoot, BaseEntityProps } from '../entities/base/aggregate-root'
 import { OrganizationEvents } from './organization.events';
 
 export interface OrganizationProps extends BaseEntityProps {
-  ownerId: string;
+  userId: string;
   name: string;
   slug: string;
-  document?: string;
-  logo?: string;
   description?: string;
-  category?: string;
+  photoUrl?: string;
+  address?: string;
+  phone?: string;
   deletedAt?: Date;
 }
 
@@ -26,22 +26,22 @@ export class Organization extends AggregateRoot<OrganizationProps> {
   }
 
   static create(data: {
-    ownerId: string;
+    userId: string;
     name: string;
     slug: string;
-    document?: string;
-    logo?: string;
     description?: string;
-    category?: string;
+    photoUrl?: string;
+    address?: string;
+    phone?: string;
   }): Organization {
     const organization = new Organization({
-      ownerId: data.ownerId,
+      userId: data.userId,
       name: data.name,
       slug: data.slug,
-      document: data.document,
-      logo: data.logo,
       description: data.description,
-      category: data.category,
+      photoUrl: data.photoUrl,
+      address: data.address,
+      phone: data.phone,
     });
 
     organization.raise({
@@ -50,7 +50,7 @@ export class Organization extends AggregateRoot<OrganizationProps> {
       aggregateType: 'Organization',
       payload: {
         organizationId: organization.id,
-        ownerId: data.ownerId,
+        userId: data.userId,
         name: data.name,
         slug: data.slug,
       },
@@ -61,34 +61,34 @@ export class Organization extends AggregateRoot<OrganizationProps> {
 
   static reconstitute(data: {
     id: string;
-    ownerId: string;
+    userId: string;
     name: string;
     slug: string;
-    document?: string;
-    logo?: string;
     description?: string;
-    category?: string;
+    photoUrl?: string;
+    address?: string;
+    phone?: string;
     createdAt: Date;
     updatedAt: Date;
     deletedAt?: Date;
   }): Organization {
     return new Organization({
       id: data.id,
-      ownerId: data.ownerId,
+      userId: data.userId,
       name: data.name,
       slug: data.slug,
-      document: data.document,
-      logo: data.logo,
       description: data.description,
-      category: data.category,
+      photoUrl: data.photoUrl,
+      address: data.address,
+      phone: data.phone,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
       deletedAt: data.deletedAt,
     });
   }
 
-  get ownerId(): string {
-    return this.props.ownerId;
+  get userId(): string {
+    return this.props.userId;
   }
 
   get name(): string {
@@ -99,20 +99,20 @@ export class Organization extends AggregateRoot<OrganizationProps> {
     return this.props.slug;
   }
 
-  get document(): string | undefined {
-    return this.props.document;
-  }
-
-  get logo(): string | undefined {
-    return this.props.logo;
-  }
-
   get description(): string | undefined {
     return this.props.description;
   }
 
-  get category(): string | undefined {
-    return this.props.category;
+  get photoUrl(): string | undefined {
+    return this.props.photoUrl;
+  }
+
+  get address(): string | undefined {
+    return this.props.address;
+  }
+
+  get phone(): string | undefined {
+    return this.props.phone;
   }
 
   get deletedAt(): Date | undefined {
@@ -122,10 +122,10 @@ export class Organization extends AggregateRoot<OrganizationProps> {
   update(data: {
     name?: string;
     slug?: string;
-    document?: string;
-    logo?: string;
     description?: string;
-    category?: string;
+    photoUrl?: string;
+    address?: string;
+    phone?: string;
   }): void {
     const changedFields: string[] = [];
 
@@ -139,24 +139,24 @@ export class Organization extends AggregateRoot<OrganizationProps> {
       changedFields.push('slug');
     }
 
-    if (data.document !== undefined && data.document !== this.props.document) {
-      this.props.document = data.document;
-      changedFields.push('document');
-    }
-
-    if (data.logo !== undefined && data.logo !== this.props.logo) {
-      this.props.logo = data.logo;
-      changedFields.push('logo');
-    }
-
     if (data.description !== undefined && data.description !== this.props.description) {
       this.props.description = data.description;
       changedFields.push('description');
     }
 
-    if (data.category !== undefined && data.category !== this.props.category) {
-      this.props.category = data.category;
-      changedFields.push('category');
+    if (data.photoUrl !== undefined && data.photoUrl !== this.props.photoUrl) {
+      this.props.photoUrl = data.photoUrl;
+      changedFields.push('photoUrl');
+    }
+
+    if (data.address !== undefined && data.address !== this.props.address) {
+      this.props.address = data.address;
+      changedFields.push('address');
+    }
+
+    if (data.phone !== undefined && data.phone !== this.props.phone) {
+      this.props.phone = data.phone;
+      changedFields.push('phone');
     }
 
     if (changedFields.length > 0) {
@@ -187,10 +187,6 @@ export class Organization extends AggregateRoot<OrganizationProps> {
         deletedAt: this.props.deletedAt,
       },
     });
-  }
-
-  canDelete(hasActiveUnits: boolean): boolean {
-    return !hasActiveUnits;
   }
 
   isDeleted(): boolean {

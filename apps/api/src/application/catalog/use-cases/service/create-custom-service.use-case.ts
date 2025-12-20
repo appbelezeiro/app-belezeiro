@@ -9,28 +9,12 @@ class UseCase {
   ) {}
 
   async execute(input: UseCase.Input): Promise<UseCase.Output> {
-    let service: Service;
-
-    if (input.professionalProfileId) {
-      service = Service.createCustomForProfessional({
-        professionalProfileId: input.professionalProfileId,
-        name: input.name,
-        description: input.description,
-        defaultPrice: input.defaultPrice,
-        defaultDuration: input.defaultDuration,
-      });
-    } else if (input.unitId && input.createdById) {
-      service = Service.createCustomForUnit({
-        unitId: input.unitId,
-        createdById: input.createdById,
-        name: input.name,
-        description: input.description,
-        defaultPrice: input.defaultPrice,
-        defaultDuration: input.defaultDuration,
-      });
-    } else {
-      throw new Error('Either professionalProfileId or (unitId and createdById) must be provided');
-    }
+    const service = Service.createCustomForProfessional({
+      professionalProfileId: input.professionalProfileId,
+      name: input.name,
+      description: input.description,
+      defaultDuration: input.defaultDuration,
+    });
 
     await this.serviceRepository.create(service);
 
@@ -47,12 +31,9 @@ class UseCase {
 
 namespace UseCase {
   export type Input = {
-    professionalProfileId?: string;
-    unitId?: string;
-    createdById?: string;
+    professionalProfileId: string;
     name: string;
     description?: string;
-    defaultPrice?: number;
     defaultDuration?: number;
   };
 

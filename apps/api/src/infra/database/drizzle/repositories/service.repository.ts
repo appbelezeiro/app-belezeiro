@@ -64,15 +64,6 @@ export class ServiceRepository implements IServiceRepository {
     return rows.map((row) => ServiceMapper.toDomain(row));
   }
 
-  async findByUnitId(unitId: string): Promise<Service[]> {
-    const rows = await this.db
-      .select()
-      .from(servicesTable)
-      .where(eq(servicesTable.unitId, unitId));
-
-    return rows.map((row) => ServiceMapper.toDomain(row));
-  }
-
   async update(service: Service): Promise<Service> {
     const serviceInsert = ServiceMapper.toPersistence(service);
 
@@ -81,7 +72,6 @@ export class ServiceRepository implements IServiceRepository {
       .set({
         name: serviceInsert.name,
         description: serviceInsert.description,
-        defaultPrice: serviceInsert.defaultPrice,
         defaultDuration: serviceInsert.defaultDuration,
         updatedAt: serviceInsert.updatedAt,
       })

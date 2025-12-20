@@ -29,7 +29,6 @@ class UseCase {
     const professionalService = ProfessionalService.create({
       professionalProfileId: input.professionalProfileId,
       serviceId: input.serviceId,
-      customPrice: input.customPrice,
       customDuration: input.customDuration,
       isActive: input.isActive,
     });
@@ -46,7 +45,6 @@ namespace UseCase {
   export type Input = {
     professionalProfileId: string;
     serviceId: string;
-    customPrice?: number;
     customDuration?: number;
     isActive?: boolean;
   };

@@ -17,11 +17,7 @@ class UseCase {
       throw new ProfessionalServiceNotFoundError(input.professionalServiceId);
     }
 
-    professionalService.updatePrice(input.customPrice);
-
-    if (input.customDuration !== undefined) {
-      professionalService.updateDuration(input.customDuration);
-    }
+    professionalService.updateDuration(input.customDuration);
 
     await this.professionalServiceRepository.update(professionalService);
 
@@ -34,8 +30,7 @@ class UseCase {
 namespace UseCase {
   export type Input = {
     professionalServiceId: string;
-    customPrice?: number;
-    customDuration?: number;
+    customDuration: number;
   };
 
   export type Output = {
@@ -43,4 +38,4 @@ namespace UseCase {
   };
 }
 
-export { UseCase as UpdateProfessionalServicePriceUseCase };
+export { UseCase as UpdateProfessionalServiceDurationUseCase };

@@ -33,14 +33,14 @@ class UseCase {
       })),
       services: professionalServices.map((ps) => {
         const service = servicesMap.get(ps.serviceId);
+        const finalDuration = ps.customDuration ?? service?.defaultDuration ?? 0;
         return {
           id: ps.id,
           serviceId: ps.serviceId,
           serviceName: service?.name ?? '',
-          customPrice: ps.customPrice,
           customDuration: ps.customDuration,
-          defaultPrice: service?.defaultPrice,
           defaultDuration: service?.defaultDuration,
+          finalDuration,
           isActive: ps.isActive,
         };
       }),
@@ -64,10 +64,9 @@ namespace UseCase {
       id: string;
       serviceId: string;
       serviceName: string;
-      customPrice?: number;
       customDuration?: number;
-      defaultPrice?: number;
       defaultDuration?: number;
+      finalDuration: number;
       isActive: boolean;
     }>;
   };
