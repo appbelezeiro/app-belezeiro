@@ -12,6 +12,10 @@ export const professionalProfilesTable = pgTable('professional_profiles', {
   yearsOfExperience: integer('years_of_experience'),
   achievements: jsonb('achievements').notNull().$type<string[]>(),
   specialties: jsonb('specialties').notNull().$type<string[]>(),
+  slotDurationMinutes: integer('slot_duration_minutes').default(30).notNull(),
+  minAdvanceMinutes: integer('min_advance_minutes').default(60).notNull(),
+  maxAdvanceDays: integer('max_advance_days').default(30).notNull(),
+  bufferMinutes: integer('buffer_minutes').default(0).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

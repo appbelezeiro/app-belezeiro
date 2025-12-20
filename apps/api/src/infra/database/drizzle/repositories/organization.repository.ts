@@ -1,9 +1,8 @@
-import { eq, isNull } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { IOrganizationRepository } from '../../../../contracts/repositories/organization.repository';
 import { Organization } from '../../../../domain/organization/organization.aggregate';
 import { organizationsTable } from '../schemas/organizations.schema';
-import { unitsTable } from '../schemas/units.schema';
 import { OrganizationMapper } from '../mappers/organization.mapper';
 
 export class OrganizationRepository implements IOrganizationRepository {
@@ -46,11 +45,11 @@ export class OrganizationRepository implements IOrganizationRepository {
     return OrganizationMapper.toDomain(row);
   }
 
-  async findByOwnerId(ownerId: string): Promise<Organization[]> {
+  async findByUserId(userId: string): Promise<Organization[]> {
     const rows = await this.db
       .select()
       .from(organizationsTable)
-      .where(eq(organizationsTable.ownerId, ownerId));
+      .where(eq(organizationsTable.userId, userId));
 
     return rows.map((row) => OrganizationMapper.toDomain(row));
   }
@@ -64,10 +63,10 @@ export class OrganizationRepository implements IOrganizationRepository {
       .set({
         name: organizationInsert.name,
         slug: organizationInsert.slug,
-        document: organizationInsert.document,
-        logo: organizationInsert.logo,
         description: organizationInsert.description,
-        category: organizationInsert.category,
+        photoUrl: organizationInsert.photoUrl,
+        address: organizationInsert.address,
+        phone: organizationInsert.phone,
         updatedAt: organizationInsert.updatedAt,
         deletedAt: organizationInsert.deletedAt,
       })
@@ -79,27 +78,9 @@ export class OrganizationRepository implements IOrganizationRepository {
   async softDelete(id: string): Promise<void> {
     const now = new Date();
 
-    await this.db.transaction(async (tx) => {
-      await tx
-        .update(organizationsTable)
-        .set({ deletedAt: now })
-        .where(eq(organizationsTable.id, id));
-
-      await tx
-        .update(unitsTable)
-        .set({ deletedAt: now })
-        .where(eq(unitsTable.organizationId, id));
-    });
-  }
-
-  async hasActiveUnits(organizationId: string): Promise<boolean> {
-    const [result] = await this.db
-      .select({ id: unitsTable.id })
-      .from(unitsTable)
-      .where(eq(unitsTable.organizationId, organizationId))
-      .where(isNull(unitsTable.deletedAt))
-      .limit(1);
-
-    return !!result;
+    await this.db
+      .update(organizationsTable)
+      .set({ deletedAt: now })
+      .where(eq(organizationsTable.id, id));
   }
 }
