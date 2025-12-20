@@ -12,6 +12,17 @@ export interface ProfessionalProfileProps extends BaseEntityProps {
   achievements: string[];
   specialties: string[];
   services: ProfessionalService[];
+  slotDurationMinutes: number;
+  minAdvanceMinutes: number;
+  maxAdvanceDays: number;
+  bufferMinutes: number;
+}
+
+export interface BookingRules {
+  slotDurationMinutes: number;
+  minAdvanceMinutes: number;
+  maxAdvanceDays: number;
+  bufferMinutes: number;
 }
 
 export class ProfessionalProfile extends AggregateRoot<ProfessionalProfileProps> {
@@ -34,6 +45,10 @@ export class ProfessionalProfile extends AggregateRoot<ProfessionalProfileProps>
     yearsOfExperience?: YearsOfExperience;
     achievements?: string[];
     specialties?: string[];
+    slotDurationMinutes?: number;
+    minAdvanceMinutes?: number;
+    maxAdvanceDays?: number;
+    bufferMinutes?: number;
   }): ProfessionalProfile {
     const profile = new ProfessionalProfile({
       userId: data.userId,
@@ -43,6 +58,10 @@ export class ProfessionalProfile extends AggregateRoot<ProfessionalProfileProps>
       achievements: data.achievements ?? [],
       specialties: data.specialties ?? [],
       services: [],
+      slotDurationMinutes: data.slotDurationMinutes ?? 30,
+      minAdvanceMinutes: data.minAdvanceMinutes ?? 60,
+      maxAdvanceDays: data.maxAdvanceDays ?? 30,
+      bufferMinutes: data.bufferMinutes ?? 0,
     });
 
     profile.raise({
@@ -68,6 +87,10 @@ export class ProfessionalProfile extends AggregateRoot<ProfessionalProfileProps>
     achievements: string[];
     specialties: string[];
     services: ProfessionalService[];
+    slotDurationMinutes: number;
+    minAdvanceMinutes: number;
+    maxAdvanceDays: number;
+    bufferMinutes: number;
     createdAt: Date;
     updatedAt: Date;
   }): ProfessionalProfile {
@@ -80,6 +103,10 @@ export class ProfessionalProfile extends AggregateRoot<ProfessionalProfileProps>
       achievements: data.achievements,
       specialties: data.specialties,
       services: data.services,
+      slotDurationMinutes: data.slotDurationMinutes,
+      minAdvanceMinutes: data.minAdvanceMinutes,
+      maxAdvanceDays: data.maxAdvanceDays,
+      bufferMinutes: data.bufferMinutes,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
     });
@@ -111,6 +138,22 @@ export class ProfessionalProfile extends AggregateRoot<ProfessionalProfileProps>
 
   get services(): readonly ProfessionalService[] {
     return this.props.services;
+  }
+
+  get slotDurationMinutes(): number {
+    return this.props.slotDurationMinutes;
+  }
+
+  get minAdvanceMinutes(): number {
+    return this.props.minAdvanceMinutes;
+  }
+
+  get maxAdvanceDays(): number {
+    return this.props.maxAdvanceDays;
+  }
+
+  get bufferMinutes(): number {
+    return this.props.bufferMinutes;
   }
 
   updateProfile(data: {
@@ -152,47 +195,63 @@ export class ProfessionalProfile extends AggregateRoot<ProfessionalProfileProps>
     });
   }
 
-  linkToUnit(unitId: string): void {
-    this.touch();
+  updateBookingRules(data: {
+    slotDurationMinutes?: number;
+    minAdvanceMinutes?: number;
+    maxAdvanceDays?: number;
+    bufferMinutes?: number;
+  }): void {
+    if (data.slotDurationMinutes !== undefined) {
+      if (!this.validateSlotDuration(data.slotDurationMinutes)) {
+        throw new Error('slotDurationMinutes must be 15, 30, or 60');
+      }
+      this.props.slotDurationMinutes = data.slotDurationMinutes;
+    }
 
-    this.raise({
-      eventType: ProfessionalProfileEvents.ProfessionalUnitLinked,
-      aggregateId: this.id,
-      aggregateType: 'ProfessionalProfile',
-      payload: {
-        professionalProfileId: this.id,
-        unitId,
-      },
-    });
-  }
+    if (data.minAdvanceMinutes !== undefined) {
+      if (data.minAdvanceMinutes < 0) {
+        throw new Error('minAdvanceMinutes must be >= 0');
+      }
+      this.props.minAdvanceMinutes = data.minAdvanceMinutes;
+    }
 
-  unlinkFromUnit(unitId: string, hasActiveBookings: boolean): void {
-    if (hasActiveBookings) {
-      throw new Error('Cannot unlink professional with active bookings');
+    if (data.maxAdvanceDays !== undefined) {
+      if (data.maxAdvanceDays <= 0) {
+        throw new Error('maxAdvanceDays must be > 0');
+      }
+      this.props.maxAdvanceDays = data.maxAdvanceDays;
+    }
+
+    if (data.bufferMinutes !== undefined) {
+      if (data.bufferMinutes < 0) {
+        throw new Error('bufferMinutes must be >= 0');
+      }
+      this.props.bufferMinutes = data.bufferMinutes;
     }
 
     this.touch();
+  }
 
-    this.raise({
-      eventType: ProfessionalProfileEvents.ProfessionalUnitUnlinked,
-      aggregateId: this.id,
-      aggregateType: 'ProfessionalProfile',
-      payload: {
-        professionalProfileId: this.id,
-        unitId,
-      },
-    });
+  getBookingRules(): BookingRules {
+    return {
+      slotDurationMinutes: this.props.slotDurationMinutes,
+      minAdvanceMinutes: this.props.minAdvanceMinutes,
+      maxAdvanceDays: this.props.maxAdvanceDays,
+      bufferMinutes: this.props.bufferMinutes,
+    };
+  }
+
+  validateSlotDuration(minutes: number): boolean {
+    return minutes === 15 || minutes === 30 || minutes === 60;
   }
 
   addService(data: {
     serviceId: string;
-    customPrice?: number;
     customDuration?: number;
   }): void {
     const service = ProfessionalService.create({
       professionalProfileId: this.id,
       serviceId: data.serviceId,
-      customPrice: data.customPrice,
       customDuration: data.customDuration,
     });
 
@@ -232,24 +291,24 @@ export class ProfessionalProfile extends AggregateRoot<ProfessionalProfileProps>
     });
   }
 
-  updateServicePrice(serviceId: string, price: number | undefined): void {
+  updateServiceDuration(serviceId: string, duration: number | undefined): void {
     const service = this.props.services.find((s) => s.serviceId === serviceId);
 
     if (!service) {
       throw new Error(`Service ${serviceId} not found`);
     }
 
-    service.updatePrice(price);
+    service.updateDuration(duration);
     this.touch();
 
     this.raise({
-      eventType: ProfessionalProfileEvents.ProfessionalServicePriceUpdated,
+      eventType: ProfessionalProfileEvents.ProfessionalServiceDurationUpdated,
       aggregateId: this.id,
       aggregateType: 'ProfessionalProfile',
       payload: {
         professionalProfileId: this.id,
         serviceId,
-        customPrice: price,
+        customDuration: duration,
       },
     });
   }

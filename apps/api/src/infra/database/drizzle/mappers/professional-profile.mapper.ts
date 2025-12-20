@@ -11,6 +11,7 @@ export class ProfessionalProfileMapper {
   static toPersistence(profile: ProfessionalProfile): {
     profile: ProfessionalProfileInsert;
   } {
+    const bookingRules = profile.getBookingRules();
     return {
       profile: {
         id: profile.id,
@@ -20,6 +21,10 @@ export class ProfessionalProfileMapper {
         yearsOfExperience: profile.yearsOfExperience?.value ?? null,
         achievements: profile.achievements as string[],
         specialties: profile.specialties as string[],
+        slotDurationMinutes: bookingRules.slotDurationMinutes,
+        minAdvanceMinutes: bookingRules.minAdvanceMinutes,
+        maxAdvanceDays: bookingRules.maxAdvanceDays,
+        bufferMinutes: bookingRules.bufferMinutes,
         createdAt: profile.createdAt,
         updatedAt: profile.updatedAt,
       },
@@ -40,6 +45,10 @@ export class ProfessionalProfileMapper {
         : undefined,
       achievements: row.achievements as string[],
       specialties: row.specialties as string[],
+      slotDurationMinutes: row.slotDurationMinutes,
+      minAdvanceMinutes: row.minAdvanceMinutes,
+      maxAdvanceDays: row.maxAdvanceDays,
+      bufferMinutes: row.bufferMinutes,
       services,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,

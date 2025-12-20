@@ -10,3 +10,6 @@ export * from './specialties.schema';
 export * from './services.schema';
 export * from './specialty-services.schema';
 export * from './professional-specialties.schema';
+export * from './bookings.schema';
+export * from './booking-services.schema';
+export * from './availabilities.schema';
